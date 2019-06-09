@@ -1,0 +1,5 @@
+---
+- name: restart hitch
+  service:
+    name: hitch
+    state: restarted

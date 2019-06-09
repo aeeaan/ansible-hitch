@@ -1,0 +1,73 @@
+---
+- name: install hitch
+  yum:
+    name: hitch
+    state: present
+  tags:
+    - hitch
+    - packages
+
+- name: install hitch config
+  template:
+    src: hitch.conf.j2
+    dest: /etc/hitch/hitch.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart hitch
+  tags:
+    - hitch
+    - configuration
+
+- name: ensure python crypto is installed
+  yum:
+    name: python2-cryptography
+    state: present
+  when: ansible_distribution_major_version|int > 6
+  tags:
+    - hitch
+    - packages
+
+- name: generate default key for self-signed cert
+  openssl_privatekey:
+    path: "{{ hitch_private_key }}"
+    size: 4096
+
+- name: generate default csr for self-signed cert
+  openssl_csr:
+    path: "{{ hitch_csr }}"
+    privatekey_path: "{{ hitch_private_key }}"
+    common_name: ia.ai
+
+- name: generate default self-signed certificate
+  openssl_certificate:
+    path: "{{ hitch_cert }}"
+    privatekey_path: "{{ hitch_private_key }}"
+    csr_path: "{{ hitch_csr }}"
+    provider: selfsigned
+
+- name: configure firewalld for hitch
+  firewalld:
+    zone: public
+    port: "{{ hitch_port }}/tcp"
+    permanent: true
+    state: enabled
+  when: hitch_open_port and ansible_distribution_major_version|int > 6
+  notify: reload firewall
+  tags:
+    - hitch
+    - firewall
+    - configuration
+
+
+- name: ensure hitch is enabled and running
+  service:
+    name: hitch 
+    enabled: yes
+    state: started
+  tags:
+    - hitch
+    - configuration
+    - services
+
+

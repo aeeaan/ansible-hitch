@@ -1,0 +1,35 @@
+# {{ ansible_managed }}
+
+
+pem-file = {
+    cert = "{{ hitch_cert }}"
+    private-key =  "{{ hitch_private_key }}"
+}
+
+{% if hitch_pem %}
+pem-file = "{{ hitch_pem }}"
+{% endif %}
+ciphers = "{{ hitch_ciphers }}"
+
+frontend = {
+    host = "{{ hitch_host }}"
+    port = "{{ hitch_port }}"
+}
+backend = "[{{ hitch_backend_ip }}]:{{ hitch_backend_port }}"    # 6086 is the default Varnish PROXY port.
+workers = 4
+
+daemon = on
+
+syslog = off
+syslog-facility = "local2"
+log-level = 2
+
+user = "hitch"
+group = "hitch"
+
+{% if hitch_alpn %}
+#alpn-protos = "h2, http/1.1"
+{% endif %}
+
+# run Varnish as backend over PROXY; varnishd -a :80 -a localhost:6086,PROXY ..
+write-proxy-v2 = on
