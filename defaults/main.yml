@@ -1,12 +1,15 @@
 ---
 hitch_alpn: true
-hitch_pem: ''
 hitch_cert: /etc/pki/tls/certs/hitch.crt
 hitch_csr: /etc/pki/tls/certs/hitch.csr
+hitch_pem: /etc/pki/tls/certs/hitch.pem
+hitch_dhparams: /etc/pki/tls/certs/dhparams.pem
+hitch_dhparams_size: 2048
 hitch_private_key: /etc/pki/tls/private/hitch.key
-hitch_ciphers: "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH"
+hitch_ciphers: "EECDH+AESGCM:EDH+AESGCM"
 hitch_host: "*"
 hitch_port: 443
 hitch_backend_ip: "127.0.0.1"
-hitch_backend_port: "80"
+hitch_backend_port: "6086"
+hitch_workers: 2
 hitch_open_port: false

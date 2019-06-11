@@ -3,3 +3,15 @@
   service:
     name: hitch
     state: restarted
+  listen: "set hitch_pem permissions"
+
+- name: build pem
+  shell: "cat {{ hitch_private_key }} {{ hitch_cert }} {{ hitch_dhparams }} > {{ hitch_pem }};"
+
+- name: set hitch_pem permissions
+  file:
+    path: "{{ hitch_pem }}"
+    owner: root
+    group: hitch
+    mode: 0640
+  listen: "build pem"

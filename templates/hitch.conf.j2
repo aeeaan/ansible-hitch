@@ -1,24 +1,24 @@
 # {{ ansible_managed }}
 
-
-pem-file = {
-    cert = "{{ hitch_cert }}"
-    private-key =  "{{ hitch_private_key }}"
-}
-
-{% if hitch_pem %}
-pem-file = "{{ hitch_pem }}"
-{% endif %}
 ciphers = "{{ hitch_ciphers }}"
+tls-protos = TLSv1.2
+prefer-server-ciphers = on
 
 frontend = {
     host = "{{ hitch_host }}"
     port = "{{ hitch_port }}"
+{% if certbot_certs is defined %}
+{% for item in certbot_certs %}
+    pem-file = "/etc/hitch/{{ item.domains[0]|replace('*.', '') }}.pem"
+{% endfor %}
+{% else %}
+    pem-file = "{{ hitch_pem }}"
+{% endif %}
 }
 backend = "[{{ hitch_backend_ip }}]:{{ hitch_backend_port }}"    # 6086 is the default Varnish PROXY port.
-workers = 4
+workers = {{ hitch_workers }}
 
-daemon = on
+daemon = off
 
 syslog = off
 syslog-facility = "local2"
@@ -28,7 +28,7 @@ user = "hitch"
 group = "hitch"
 
 {% if hitch_alpn %}
-#alpn-protos = "h2, http/1.1"
+alpn-protos = "h2, http/1.1"
 {% endif %}
 
 # run Varnish as backend over PROXY; varnishd -a :80 -a localhost:6086,PROXY ..

@@ -19,25 +19,18 @@
     - hitch
     - configuration
 
-- name: ensure python crypto is installed
-  yum:
-    name: python2-cryptography
-    state: present
-  when: ansible_distribution_major_version|int > 6
-  tags:
-    - hitch
-    - packages
-
 - name: generate default key for self-signed cert
   openssl_privatekey:
     path: "{{ hitch_private_key }}"
     size: 4096
+  notify: build pem
 
 - name: generate default csr for self-signed cert
   openssl_csr:
     path: "{{ hitch_csr }}"
     privatekey_path: "{{ hitch_private_key }}"
     common_name: ia.ai
+  notify: build pem
 
 - name: generate default self-signed certificate
   openssl_certificate:
@@ -45,6 +38,26 @@
     privatekey_path: "{{ hitch_private_key }}"
     csr_path: "{{ hitch_csr }}"
     provider: selfsigned
+  notify: build pem
+
+- name: generate dh params
+  openssl_dhparam:
+    path: "{{ hitch_dhparams }}"
+    size: "{{ hitch_dhparams_size }}"
+  notify: build pem
+
+- name: copy certbot files into /etc/hitch
+  copy:
+    src: "/etc/letsencrypt/live/{{ item.domains[0]|replace('*.', '') }}/hitch.pem"
+    dest: "/etc/hitch/{{ item.domains[0]|replace('*.', '') }}.pem"
+    remote_src: yes
+    owner: hitch
+    group: hitch
+    mode: 0600
+  loop:
+    "{{ certbot_certs }}"
+  when: certbot_certs is defined
+  notify: restart hitch
 
 - name: configure firewalld for hitch
   firewalld:
@@ -58,7 +71,6 @@
     - hitch
     - firewall
     - configuration
-
 
 - name: ensure hitch is enabled and running
   service:
